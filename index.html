@@ -24,6 +24,20 @@
         <input type="file" id="file-input" accept=".prproj">
       </div>
 
+      <!-- 変換先バージョン選択 -->
+      <div class="version-select-box">
+        <label for="target-version" class="version-label">⚙️ 変換先の Premiere Pro バージョンを選択：</label>
+        <select id="target-version" class="version-select">
+          <option value="43">Premiere Pro 2025 (v25.0)</option>
+          <option value="42" selected>Premiere Pro 2024 (v24.0)</option>
+          <option value="41">Premiere Pro 2023 (v23.0)</option>
+          <option value="40">Premiere Pro 2022 (v22.0)</option>
+          <option value="39">Premiere Pro 2021 (v15.0)</option>
+          <option value="38">Premiere Pro 2020 (v14.0)</option>
+          <option value="1">自動変換トリガー (旧仕様 / v1)</option>
+        </select>
+      </div>
+
       <!-- 進捗・ステータス表示 -->
       <div id="status-panel" class="status-panel">
         <div class="file-info">

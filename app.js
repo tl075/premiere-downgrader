@@ -9,6 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnGroup = document.getElementById('btn-group');
   const btnDownload = document.getElementById('btn-download');
   const btnReset = document.getElementById('btn-reset');
+  const targetVersionSelect = document.getElementById('target-version');
 
   let processedBlob = null;
   let processedFileName = '';
@@ -77,6 +78,7 @@ document.addEventListener('DOMContentLoaded', () => {
     progressBarFill.style.width = '0%';
     showMessage('info', '');
     btnGroup.style.display = 'none';
+    targetVersionSelect.disabled = false;
   }
 
   // メッセージ表示関数
@@ -185,6 +187,8 @@ document.addEventListener('DOMContentLoaded', () => {
     fileNameEl.textContent = file.name;
     fileSizeEl.textContent = formatBytes(file.size);
     progressBarFill.style.width = '10%';
+    targetVersionSelect.disabled = true;
+    const targetVersion = targetVersionSelect.value;
     showMessage('info', 'プロジェクトファイルを解析中...');
 
     try {
@@ -220,10 +224,11 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       const originalVersion = match[2];
-      showMessage('info', `元のプロジェクトバージョン（内規ID: ${originalVersion}）を検出しました。ダウングレード処理中...`);
+      const selectedOptionText = targetVersionSelect.options[targetVersionSelect.selectedIndex].text;
+      showMessage('info', `元のプロジェクトバージョン（内規ID: ${originalVersion}）を検出しました。${selectedOptionText} 形式にダウングレード中...`);
       
-      // バージョンを "1" に書き換える（Premiere Proで開いた際に自動マイグレーションをトリガーするため）
-      const updatedXmlText = xmlText.replace(projectTagRegex, '$11$3');
+      // バージョンを選択された値に書き換える
+      const updatedXmlText = xmlText.replace(projectTagRegex, `$1${targetVersion}$3`);
       progressBarFill.style.width = '60%';
 
       // 4. 文字列からバイナリ（Uint8Array）へ正確に復元
@@ -253,10 +258,11 @@ document.addEventListener('DOMContentLoaded', () => {
       progressBarFill.style.width = '100%';
       
       // 出力ファイル名設定
+      const targetVersionLabel = targetVersion === '1' ? 'v1' : targetVersionSelect.options[targetVersionSelect.selectedIndex].text.match(/\d{4}/)?.[0] || targetVersion;
       const baseName = file.name.substring(0, file.name.lastIndexOf('.'));
-      processedFileName = `${baseName}_downgraded.prproj`;
+      processedFileName = `${baseName}_downgraded_${targetVersionLabel}.prproj`;
 
-      showMessage('success', `ダウングレードに成功しました！（バージョンID ${originalVersion} → 1）`);
+      showMessage('success', `ダウングレードに成功しました！（${selectedOptionText} 互換）`);
       
       // ダウンロードボタン有効化
       btnGroup.style.display = 'flex';
