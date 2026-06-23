@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnDownload = document.getElementById('btn-download');
   const btnReset = document.getElementById('btn-reset');
   const targetVersionSelect = document.getElementById('target-version');
-  const mascotBubble = document.getElementById('mascot-bubble');
+  const mascotImage = document.getElementById('mascot-image');
 
   let processedBlob = null;
   let processedFileName = '';
@@ -66,7 +66,6 @@ document.addEventListener('DOMContentLoaded', () => {
       URL.revokeObjectURL(url);
       
       showMessage('success', 'ファイルの保存が完了しました！');
-      updateMascotBubble('魔法のダウングレード版をダウンロードしたよ！開けるか試してみてね！💖');
     }
   });
 
@@ -81,7 +80,6 @@ document.addEventListener('DOMContentLoaded', () => {
     showMessage('info', '');
     btnGroup.style.display = 'none';
     targetVersionSelect.disabled = false;
-    updateMascotBubble('他のファイルもダウングレードしちゃう？💫');
   }
 
   // メッセージ表示関数
@@ -193,7 +191,6 @@ document.addEventListener('DOMContentLoaded', () => {
     targetVersionSelect.disabled = true;
     const targetVersion = targetVersionSelect.value;
     showMessage('info', 'プロジェクトファイルを解析中...');
-    updateMascotBubble('プロジェクトを解析中だよ〜！ちょっと待ってね！⏰');
 
     try {
       // 1. ファイルの読み込みと解凍
@@ -267,7 +264,6 @@ document.addEventListener('DOMContentLoaded', () => {
       processedFileName = `${baseName}_downgraded_${targetVersionLabel}.prproj`;
 
       showMessage('success', `ダウングレードに成功しました！（${selectedOptionText} 互換）`);
-      updateMascotBubble('ダウングレードできたよ！すごいでしょ！ダウンロードしてね！🎉');
       
       // ダウンロードボタン有効化
       btnGroup.style.display = 'flex';
@@ -277,20 +273,39 @@ document.addEventListener('DOMContentLoaded', () => {
       progressBarFill.style.width = '100%';
       progressBarFill.style.backgroundColor = 'var(--error-color)';
       showMessage('error', error.message || 'ファイルの処理中にエラーが発生しました。');
-      updateMascotBubble('あれれ？エラーになっちゃったみたい…💦 ファイルを確認してね');
       btnGroup.style.display = 'flex';
       btnDownload.style.display = 'none'; // エラー時はダウンロード不可
     }
   }
 
-  // マスコットの吹き出し更新関数
-  function updateMascotBubble(text) {
-    if (mascotBubble) {
-      mascotBubble.textContent = text;
-      // 吹き出しがぷるんと動くアニメーションをトリガー
-      mascotBubble.classList.remove('bubble-animate');
-      void mascotBubble.offsetWidth; // 強制リフロー
-      mascotBubble.classList.add('bubble-animate');
-    }
+  // 音声ファイルリスト
+  const voiceFiles = [
+    'voices/voice_1.mp3',
+    'voices/voice_2.mp3',
+    'voices/voice_3.mp3',
+    'voices/voice_4.mp3',
+    'voices/voice_5.mp3',
+    'voices/voice_6.mp3',
+    'voices/voice_7.mp3'
+  ];
+
+  // キャラクタークリックでランダム音声再生 ＆ ジャンプアニメーション
+  if (mascotImage) {
+    mascotImage.addEventListener('click', () => {
+      // ランダムに音声を選択
+      const randomIndex = Math.floor(Math.random() * voiceFiles.length);
+      const audio = new Audio(voiceFiles[randomIndex]);
+      audio.play().catch(err => console.warn('Audio play failed:', err));
+
+      // ジャンプアニメーションをトリガー
+      mascotImage.classList.remove('jump-animate');
+      void mascotImage.offsetWidth; // リフロー
+      mascotImage.classList.add('jump-animate');
+    });
+
+    // アニメーション終了時にクラスをクリーンアップ
+    mascotImage.addEventListener('animationend', () => {
+      mascotImage.classList.remove('jump-animate');
+    });
   }
 });
