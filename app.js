@@ -305,6 +305,51 @@ document.addEventListener('DOMContentLoaded', () => {
     mascotContainer.style.right = 'auto';
     mascotContainer.style.top = 'auto';
 
+    // 不透明ピクセル判定用キャッシュ
+    let mascotCanvas = null;
+    let mascotCtx = null;
+    let mascotImgData = null;
+
+    const initMascotHitMap = () => {
+      try {
+        mascotCanvas = document.createElement('canvas');
+        mascotCanvas.width = mascotImage.naturalWidth;
+        mascotCanvas.height = mascotImage.naturalHeight;
+        mascotCtx = mascotCanvas.getContext('2d');
+        mascotCtx.drawImage(mascotImage, 0, 0);
+        mascotImgData = mascotCtx.getImageData(0, 0, mascotCanvas.width, mascotCanvas.height);
+      } catch (e) {
+        console.warn("Failed to init mascot hitmap (CORS or canvas error):", e);
+      }
+    };
+
+    if (mascotImage.complete) {
+      initMascotHitMap();
+    } else {
+      mascotImage.addEventListener('load', initMascotHitMap);
+    }
+
+    // 特定の座標が不透明かどうか判定
+    const isPixelOpaque = (clientX, clientY) => {
+      if (!mascotImgData) return true; // ヒットマップ未初期化時は全て当たり判定ありとする
+
+      const rect = mascotImage.getBoundingClientRect();
+      const xRatio = (clientX - rect.left) / rect.width;
+      const yRatio = (clientY - rect.top) / rect.height;
+
+      const pixelX = Math.floor(xRatio * mascotCanvas.width);
+      const pixelY = Math.floor(yRatio * mascotCanvas.height);
+
+      if (pixelX < 0 || pixelX >= mascotCanvas.width || pixelY < 0 || pixelY >= mascotCanvas.height) {
+        return false;
+      }
+
+      const index = (pixelY * mascotCanvas.width + pixelX) * 4;
+      const alpha = mascotImgData.data[index + 3];
+
+      return alpha > 30; // アルファ値が30以上なら当たり判定ありとする
+    };
+
     // ドラッグ＆クリック共通ロジック
     const onStart = (clientX, clientY) => {
       isDragging = true;
@@ -368,8 +413,22 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     };
 
-    // マウス操作の監視
+    // マウス操作的監視
     mascotImage.addEventListener('mousedown', (e) => {
+      // 透過ピクセルならクリックを貫通させて無視
+      if (!isPixelOpaque(e.clientX, e.clientY)) {
+        mascotContainer.style.pointerEvents = 'none';
+        const backendElement = document.elementFromPoint(e.clientX, e.clientY);
+        if (backendElement) {
+          const clonedEvent = new MouseEvent(e.type, e);
+          backendElement.dispatchEvent(clonedEvent);
+        }
+        setTimeout(() => {
+          mascotContainer.style.pointerEvents = 'auto';
+        }, 0);
+        return;
+      }
+
       e.preventDefault();
       onStart(e.clientX, e.clientY);
 
@@ -390,15 +449,29 @@ document.addEventListener('DOMContentLoaded', () => {
     // タッチ操作の監視（モバイルデバイス）
     mascotImage.addEventListener('touchstart', (e) => {
       if (e.touches.length === 1) {
-        onStart(e.touches[0].clientX, e.touches[0].clientY);
+        const touch = e.touches[0];
+        // 透過ピクセルならタッチイベントを貫通させて無視
+        if (!isPixelOpaque(touch.clientX, touch.clientY)) {
+          mascotContainer.style.pointerEvents = 'none';
+          const backendElement = document.elementFromPoint(touch.clientX, touch.clientY);
+          if (backendElement) {
+            const clonedEvent = new TouchEvent(e.type, e);
+            backendElement.dispatchEvent(clonedEvent);
+          }
+          setTimeout(() => {
+            mascotContainer.style.pointerEvents = 'auto';
+          }, 0);
+          return;
+        }
+        onStart(touch.clientX, touch.clientY);
       }
-    }, { passive: true });
+    });
 
     mascotImage.addEventListener('touchmove', (e) => {
       if (isDragging && e.touches.length === 1) {
         onMove(e.touches[0].clientX, e.touches[0].clientY);
       }
-    }, { passive: true });
+    });
 
     mascotImage.addEventListener('touchend', () => {
       onEnd();
