@@ -289,21 +289,122 @@ document.addEventListener('DOMContentLoaded', () => {
     'voices/voice_7.mp3'
   ];
 
-  // キャラクタークリックでランダム音声再生 ＆ ジャンプアニメーション
-  if (mascotImage) {
-    mascotImage.addEventListener('click', () => {
-      // ランダムに音声を選択
-      const randomIndex = Math.floor(Math.random() * voiceFiles.length);
-      const audio = new Audio(voiceFiles[randomIndex]);
-      audio.play().catch(err => console.warn('Audio play failed:', err));
+  // キャラクターのドラッグ移動 ＆ クリック処理の統合
+  const mascotContainer = document.getElementById('mascot-container');
+  if (mascotContainer && mascotImage) {
+    let isDragging = false;
+    let startX = 0, startY = 0;
+    let initialLeft = 0, initialBottom = 0;
+    const dragThreshold = 6; // ドラッグと判定する移動量（px）
+    let hasDragged = false;
 
-      // ジャンプアニメーションをトリガー
-      mascotImage.classList.remove('jump-animate');
-      void mascotImage.offsetWidth; // リフロー
-      mascotImage.classList.add('jump-animate');
+    // 初期スタイルの設定（ドラッグ計算を簡素化するため）
+    mascotContainer.style.left = '10px';
+    mascotContainer.style.bottom = '-20px';
+    mascotContainer.style.position = 'fixed';
+    mascotContainer.style.right = 'auto';
+    mascotContainer.style.top = 'auto';
+
+    // ドラッグ＆クリック共通ロジック
+    const onStart = (clientX, clientY) => {
+      isDragging = true;
+      hasDragged = false;
+      startX = clientX;
+      startY = clientY;
+      
+      const rect = mascotContainer.getBoundingClientRect();
+      initialLeft = rect.left;
+      initialBottom = window.innerHeight - rect.bottom;
+
+      // 移動中のトランジション遅延を一時的にオフ
+      mascotImage.style.transition = 'none';
+      mascotContainer.style.transition = 'none';
+    };
+
+    const onMove = (clientX, clientY) => {
+      if (!isDragging) return;
+
+      const deltaX = clientX - startX;
+      const deltaY = clientY - startY;
+
+      // 一定以上の移動でドラッグ判定
+      if (Math.abs(deltaX) > dragThreshold || Math.abs(deltaY) > dragThreshold) {
+        hasDragged = true;
+      }
+
+      // 新しい座標の計算
+      const newLeft = initialLeft + deltaX;
+      const newBottom = initialBottom - deltaY;
+
+      // 画面端の制限（はみ出しすぎ防止）
+      const rect = mascotContainer.getBoundingClientRect();
+      const minLeft = -rect.width / 2;
+      const maxLeft = window.innerWidth - rect.width / 2;
+      const minBottom = -rect.height + 60; // 最低60pxは画面に残す
+      const maxBottom = window.innerHeight - 120;
+
+      mascotContainer.style.left = `${Math.max(minLeft, Math.min(maxLeft, newLeft))}px`;
+      mascotContainer.style.bottom = `${Math.max(minBottom, Math.min(maxBottom, newBottom))}px`;
+    };
+
+    const onEnd = () => {
+      if (!isDragging) return;
+      isDragging = false;
+
+      // トランジションを有効化に戻す
+      mascotImage.style.transition = '';
+      mascotContainer.style.transition = '';
+
+      // ドラッグされず、単純なクリックだった場合のみボイスを再生
+      if (!hasDragged) {
+        const randomIndex = Math.floor(Math.random() * voiceFiles.length);
+        const audio = new Audio(voiceFiles[randomIndex]);
+        audio.play().catch(err => console.warn('Audio play failed:', err));
+
+        // ジャンプアニメーションをトリガー
+        mascotImage.classList.remove('jump-animate');
+        void mascotImage.offsetWidth; // リフロー
+        mascotImage.classList.add('jump-animate');
+      }
+    };
+
+    // マウス操作の監視
+    mascotImage.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      onStart(e.clientX, e.clientY);
+
+      const mouseMoveHandler = (moveEvt) => {
+        onMove(moveEvt.clientX, moveEvt.clientY);
+      };
+
+      const mouseUpHandler = () => {
+        onEnd();
+        document.removeEventListener('mousemove', mouseMoveHandler);
+        document.removeEventListener('mouseup', mouseUpHandler);
+      };
+
+      document.addEventListener('mousemove', mouseMoveHandler);
+      document.addEventListener('mouseup', mouseUpHandler);
     });
 
-    // アニメーション終了時にクラスをクリーンアップ
+    // タッチ操作の監視（モバイルデバイス）
+    mascotImage.addEventListener('touchstart', (e) => {
+      if (e.touches.length === 1) {
+        onStart(e.touches[0].clientX, e.touches[0].clientY);
+      }
+    }, { passive: true });
+
+    mascotImage.addEventListener('touchmove', (e) => {
+      if (isDragging && e.touches.length === 1) {
+        onMove(e.touches[0].clientX, e.touches[0].clientY);
+      }
+    }, { passive: true });
+
+    mascotImage.addEventListener('touchend', () => {
+      onEnd();
+    });
+
+    // アニメーション終了時のクラスクリーンアップ
     mascotImage.addEventListener('animationend', () => {
       mascotImage.classList.remove('jump-animate');
     });

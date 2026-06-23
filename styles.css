@@ -396,9 +396,9 @@ footer {
 .mascot-container {
   position: fixed;
   bottom: -20px;
-  left: 30px;
+  left: 10px; /* 初期位置を少し左にずらす */
   z-index: 100;
-  pointer-events: none; /* クリックを貫通させる */
+  pointer-events: auto; /* ドラッグ可能にするためイベントを有効化 */
 }
 
 .mascot-image {
