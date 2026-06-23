@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Premiere Pro プロジェクトダウングレードツール</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-container">
+    <header>
+      <div class="logo-icon">Pr↓</div>
+      <h1>Premiere Pro プロジェクトダウングレーダー</h1>
+      <p class="subtitle">Premiere Pro 2026等の新しいプロジェクトを2025等で開ける形式に変換します</p>
+    </header>
+
+    <main>
+      <!-- ドラッグ＆ドロップエリア -->
+      <div id="drop-zone" class="drop-zone">
+        <div class="drop-zone-icon">📥</div>
+        <p>ここにPremiere Proプロジェクトファイル（.prproj）をドラッグ＆ドロップ</p>
+        <p>または <span class="drop-zone-browse">ファイルを選択</span></p>
+        <p class="file-limit">※ 処理はブラウザ内でローカルに行われます（外部への送信はされません）</p>
+        <input type="file" id="file-input" accept=".prproj">
+      </div>
+
+      <!-- 進捗・ステータス表示 -->
+      <div id="status-panel" class="status-panel">
+        <div class="file-info">
+          <span id="file-name" class="file-name">filename.prproj</span>
+          <span id="file-size" class="file-size">0 KB</span>
+        </div>
+        <div class="progress-bar-container">
+          <div id="progress-bar-fill" class="progress-bar-fill"></div>
+        </div>
+        <div id="message" class="message info">ファイル解析中...</div>
+
+        <!-- ダウンロード・アクションボタン -->
+        <div id="btn-group" class="btn-group" style="display: none;">
+          <button id="btn-download" class="btn btn-primary">
+            <span>💾</span> ダウングレード版をダウンロード
+          </button>
+          <button id="btn-reset" class="btn btn-secondary">
+            <span>↺</span> 別のファイルを変換
+          </button>
+        </div>
+      </div>
+
+      <!-- 注意事項説明セクション -->
+      <section class="info-section">
+        <h2 class="info-title">⚠️ 使用上の注意事項</h2>
+        <ul class="info-list">
+          <li><strong>バックアップの作成:</strong> 変換前に、必ず元のプロジェクトファイルのバックアップ（コピー）を保存してください。</li>
+          <li><strong>バージョン1への変更:</strong> 本ツールはプロジェクトの内部バージョンIDを強制的に <code>1</code> に書き換えます。これにより、古いバージョンのPremiere Proで開いた際に自動的にそのバージョンの最適値にアップグレード変換されて開かれます。</li>
+          <li><strong>機能の互換性:</strong> 2026バージョンのみに存在する新機能（特殊なAI処理、テキストエンジン、エフェクト等）をタイムラインで使用している場合、2025で開いた際に該当箇所がスキップされたり、レンダリングエラーや最悪の場合アプリが強制終了する原因になることがあります。</li>
+        </ul>
+      </section>
+    </main>
+
+    <footer>
+      &copy; 2026 Local Premiere Pro Project Downgrader (Safe & Offline)
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
